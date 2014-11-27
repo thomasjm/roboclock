@@ -12,9 +12,14 @@ import Debug.Trace
 data Circle = Circle { circOrigin :: P2
                      , circRadius :: Double } deriving Show
 
+moveCircle p c = translate (r2 . unp2 $ p) c
+
+rectAtOrigin w h = translate (r2 (w/2.0, h/2.0)) (rect w h)
+
 -- Only works on equal-radius circles
 topIntersectionOfCircles :: Circle -> Circle -> Maybe P2
 topIntersectionOfCircles c1@(Circle p1 radius1) c2@(Circle p2 radius2)
+    | radius1 /= radius2 = error "This function only works on equal-radius circles"
     | magnitude (2*d) > radius1 + radius2 = Nothing
     | otherwise = Just pen
     where

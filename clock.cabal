@@ -23,5 +23,9 @@ executable clock
                      , diagrams-lib >= 1.2.0.4
                      , diagrams-svg >= 1.1.0.1
                      , vector
+                     , svgutils >= 0.1
+                     , tagsoup >= 0.13.3
+                     , SVGPath >= 1.1.2
+                     , cubicbezier >= 0.2.0
   -- hs-source-dirs:
   default-language:    Haskell2010

@@ -7,4 +7,4 @@ import System.Environment (withArgs)
 
 
 r :: Diagram B R2 -> IO ()
-r d = withArgs ["-o", "/tmp/diagram1.svg", "-w", "400"] $ mainWith (d # bg black)
+r d = withArgs ["-o", "/tmp/diagram1.svg", "-w", "800"] $ mainWith (d # bg black)
