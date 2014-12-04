@@ -2,7 +2,7 @@
 module Clock where
 
 import Diagrams.Prelude
-import Rendering (r)
+import Rendering
 import Util
 
 import Data.Maybe
@@ -69,6 +69,12 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
     <> drawNumberPoints 1 3
     <> drawNumberPoints 2 3
     <> drawNumberPoints 3 3
+
+makeLetterAnimation :: Int -> Int -> FrameList
+makeLetterAnimation number boxNum = diagrams
+    where
+      points = getNumberSeries number (boxOrigin boxNum) boxWidth boxHeight
+      diagrams = map (bothMotors . (uncurry getDrawingInfo) . findThetas) points
 
 drawNumberPoints boxNum n = foldl1 (<>) dots where
     dots = [circleAt x | x <- getNumberSeries n (boxOrigin boxNum) boxWidth boxHeight]

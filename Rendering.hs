@@ -1,10 +1,21 @@
-module Rendering (r) where
+module Rendering where
 
 import Diagrams.Prelude
-import Diagrams.Backend.SVG.CmdLine
+-- import Diagrams.Backend.SVG.CmdLine
+import Diagrams.Backend.Cairo.CmdLine
 
 import System.Environment (withArgs)
 
+import Text.Printf
 
-r :: Diagram B R2 -> IO ()
-r d = withArgs ["-o", "/tmp/diagram1.svg", "-w", "800"] $ mainWith (d # bg black)
+type FrameList = [Diagram B R2]
+
+renderSingleFrame :: String -> Diagram B R2 -> IO ()
+renderSingleFrame s d = withArgs ["-o", s, "-w", "800"] $ mainWith (d # bg black)
+
+renderFrameList :: FrameList -> IO ()
+renderFrameList frameList = sequence_ ioActions where
+    filenames = [printf "/tmp/frame%d.png" x | x <- [1..(length frameList)]]
+    ioActions = zipWith renderSingleFrame filenames frameList
+
+r = renderSingleFrame "/tmp/diagram1.svg"
