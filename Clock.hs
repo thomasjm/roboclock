@@ -41,7 +41,7 @@ getNumberSeries n offset scaleX scaleY = map
                                          (\(x,y) -> (p2 (x * scaleX, y * scaleY)) .+^ offset)
                                          samples where
     number = numbers !! n
-    samples = map number [x / 100.0 | x <- [0..100]]
+    samples = map number [x / 20.0 | x <- [0..20]]
 
 
 bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =

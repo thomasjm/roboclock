@@ -19,15 +19,16 @@ executable clock
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.7 && <4.8
+  build-depends:       SVGPath >= 1.1.2
+                     , base >=4.7 && <4.8
+                     , cubicbezier >= 0.2.0
                      , diagrams-lib >= 1.2.0.4
                      , diagrams-svg >= 1.1.0.1
-                     , diagrams-cairo >= 1.2.0.3
-                     , vector
+                     , shelly >= 1.5.6
                      , svgutils >= 0.1
                      , tagsoup >= 0.13.3
-                     , SVGPath >= 1.1.2
-                     , cubicbezier >= 0.2.0
+                     , text >= 1.1.1.3
+                     , vector
   -- hs-source-dirs:
   default-language:    Haskell2010
 
