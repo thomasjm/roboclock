@@ -15,7 +15,7 @@ import Data.Text (pack)
 type FrameList = [Diagram B R2]
 
 renderSingleFrame :: String -> Diagram B R2 -> IO ()
-renderSingleFrame s d = withArgs ["-o", s, "-w", "800"] $ mainWith (d # bg black)
+renderSingleFrame s d = withArgs ["-o", s, "-w", "800"] $ mainWith (d # bg white)
 
 renderFrameList :: FrameList -> IO ()
 renderFrameList frameList = do
@@ -25,6 +25,7 @@ renderFrameList frameList = do
   putStrLn "Converting SVGs to PNGs"
   _ <- shelly $ escaping False $ run "rm" ["/tmp/frame*.png"]
   sequence_ $ zipWith convertAction svgFilenames pngFilenames
+  _ <- shelly $ escaping False $ run "rm" ["/tmp/frame*.svg"]
 
   putStrLn $ "Generating animated gif at " ++ gifFilename
   _ <- shelly $ run "convert" ["-loop", "0", "/tmp/frame*.png", pack gifFilename]

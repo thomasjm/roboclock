@@ -50,19 +50,19 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
                 Just p -> arrowBetween end1 p # lc green <>
                           arrowBetween end2 p # lc green
 
-    -- White lines from motor origin to rod 1 endpoints
-    <> arrowBetween motor1Origin end1 # lc white
-    <> arrowBetween motor2Origin end2 # lc white
+    -- Black lines from motor origin to rod 1 endpoints
+    <> arrowBetween motor1Origin end1 # lc black
+    <> arrowBetween motor2Origin end2 # lc black
 
     -- Blue lines from rod 1 endpoints to rod 2 endpoints
     <> moveCircle end1 (circle l2) # lc blue
     <> moveCircle end2 (circle l2) # lc blue
 
     -- Boxes for number drawing
-    <> translate (boxOrigin 0) (rectAtOrigin boxWidth boxHeight # lc white)
-    <> translate (boxOrigin 1) (rectAtOrigin boxWidth boxHeight # lc white)
-    <> translate (boxOrigin 2) (rectAtOrigin boxWidth boxHeight # lc white)
-    <> translate (boxOrigin 3) (rectAtOrigin boxWidth boxHeight # lc white)
+    <> translate (boxOrigin 0) (rectAtOrigin boxWidth boxHeight # lc black)
+    <> translate (boxOrigin 1) (rectAtOrigin boxWidth boxHeight # lc black)
+    <> translate (boxOrigin 2) (rectAtOrigin boxWidth boxHeight # lc black)
+    <> translate (boxOrigin 3) (rectAtOrigin boxWidth boxHeight # lc black)
 
     -- Numbers in the boxes
     <> drawNumberPoints 0 9
@@ -78,7 +78,7 @@ makeLetterAnimation number boxNum = diagrams
 
 drawNumberPoints boxNum n = foldl1 (<>) dots where
     dots = [circleAt x | x <- getNumberSeries n (boxOrigin boxNum) boxWidth boxHeight]
-    circleAt x = translate (r2 $ unp2 x) (circle 0.005 # fc yellow # lc yellow)
+    circleAt x = translate (r2 $ unp2 x) (circle 0.005 # fc red # lc red)
 
 
 getDrawingInfo theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 pen where
@@ -97,7 +97,7 @@ foreign import ccall "theta.h sol2"
     sol2 :: CDouble -> CDouble -> CDouble -> CDouble
 findThetas :: P2 -> (Angle, Angle)
 findThetas p = (min (s11 @@ rad) (s12 @@ rad),
-                min (s21 @@ rad) (s22 @@ rad))
+                max (s21 @@ rad) (s22 @@ rad))
     where
     (x, y) = unp2 p
 
