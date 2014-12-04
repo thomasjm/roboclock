@@ -1,3 +1,4 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
 module Clock where
 
 import Diagrams.Prelude
@@ -8,6 +9,9 @@ import Data.Maybe
 import Control.Monad
 
 import Debug.Trace
+
+import Foreign
+import Foreign.C.Types
 
 import Numbers (numbers)
 
@@ -81,5 +85,25 @@ getDrawingInfo theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 p
     pen = topIntersectionOfCircles (Circle end1 l2) (Circle end2 l2)
 
 
--- xyToTheta1Theta2 :: P2 -> (Float, Float)
--- xyToTheta1Theta2 (pos
+foreign import ccall "theta.h sol1"
+    sol1 :: CDouble -> CDouble -> CDouble -> CDouble
+foreign import ccall "theta.h sol2"
+    sol2 :: CDouble -> CDouble -> CDouble -> CDouble
+findThetas :: P2 -> (Angle, Angle)
+findThetas p = (min (s11 @@ rad) (s12 @@ rad),
+                min (s21 @@ rad) (s22 @@ rad))
+    where
+    (x, y) = unp2 p
+
+    c = (l2*l2) / (l1*l1)
+
+    -- Compute the two theta values for the first motor
+    a = x / l1
+    b = y / l1
+    s11 = realToFrac $ sol1 (realToFrac a) (realToFrac b) (realToFrac c)
+    s12 = realToFrac $ sol2 (realToFrac a) (realToFrac b) (realToFrac c)
+
+    -- Compute the two theta values for the second motor, which is translated
+    othera = (x - s) / l1
+    s21 = realToFrac $ sol1 (realToFrac othera) (realToFrac b) (realToFrac c)
+    s22 = realToFrac $ sol2 (realToFrac othera) (realToFrac b) (realToFrac c)

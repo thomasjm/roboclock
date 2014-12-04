@@ -29,3 +29,7 @@ executable clock
                      , cubicbezier >= 0.2.0
   -- hs-source-dirs:
   default-language:    Haskell2010
+
+  -- Include C files
+  C-sources: theta.c
+  Includes: theta.h
