@@ -5,6 +5,9 @@ import Diagrams.Prelude
 import Rendering
 import Util
 
+import Data.List (minimumBy)
+import Data.Function (on)
+
 import Data.Maybe
 import Control.Monad
 
@@ -41,7 +44,7 @@ getNumberSeries n offset scaleX scaleY = map
                                          (\(x,y) -> (p2 (x * scaleX, y * scaleY)) .+^ offset)
                                          samples where
     number = numbers !! n
-    samples = map number [x / 20.0 | x <- [0..20]]
+    samples = map number [x / 50.0 | x <- [0..50]]
 
 
 bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
@@ -70,6 +73,8 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
     <> drawNumberPoints 2 3
     <> drawNumberPoints 3 3
 
+    <> translate (r2 (10,5)) (circle 0.5 # fc green # lc green)
+
 makeLetterAnimation :: Int -> Int -> FrameList
 makeLetterAnimation number boxNum = diagrams
     where
@@ -91,13 +96,21 @@ getDrawingInfo theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 p
     pen = topIntersectionOfCircles (Circle end1 l2) (Circle end2 l2)
 
 
+closerTo :: Angle -> Angle -> Angle -> Angle
+closerTo desired a1 a2 = minimumBy (compare `on` dist) [a1, a2] where
+    dist a = a ^+^ (negateV desired) -- TODO: normalize
+
+closerTo180 = closerTo (180 @@ deg)
+closerTo0 = closerTo (0 @@ deg)
+
+
 foreign import ccall "theta.h sol1"
     sol1 :: CDouble -> CDouble -> CDouble -> CDouble
 foreign import ccall "theta.h sol2"
     sol2 :: CDouble -> CDouble -> CDouble -> CDouble
 findThetas :: P2 -> (Angle, Angle)
-findThetas p = (min (s11 @@ rad) (s12 @@ rad),
-                max (s21 @@ rad) (s22 @@ rad))
+findThetas p = (closerTo180 (s11 @@ rad) (s12 @@ rad),
+                closerTo0 (s21 @@ rad) (s22 @@ rad))
     where
     (x, y) = unp2 p
 
