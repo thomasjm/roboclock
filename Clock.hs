@@ -13,25 +13,25 @@ import Control.Monad
 
 import Debug.Trace
 
-import Foreign
+-- import Foreign
 import Foreign.C.Types
 
 import Numbers (numbers)
 
 -- Settings
-l1 = 10.0
-l2 = 10.0
+l1 = 13.0
+l2 = 13.0
 s = 20.0 :: Double
 colonSpace = 1.5
 boxWidth = (s - colonSpace - (2*sideGap)) / 4
-boxHeight = 8.0
-boxY = 6.0
-sideGap = 1.5
+boxHeight = 7.0
+boxY = l1
+sideGap = -2.0
 
 boxOrigin :: Int -> R2
 boxOrigin n = r2 (x, y) where
     x = sideGap + (boxWidth * fromIntegral n) + (if n >= 2 then colonSpace else 0)
-    y = 4.0
+    y = boxY
 
 data DrawingInfo = DrawingInfo { motor1Origin :: P2
                                , motor2Origin :: P2
@@ -73,7 +73,8 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
     <> drawNumberPoints 2 3
     <> drawNumberPoints 3 3
 
-    <> translate (r2 (10,5)) (circle 0.5 # fc green # lc green)
+makeLettersAnimation :: (Int, Int, Int, Int) -> FrameList
+makeLettersAnimation (n1, n2, n3, n4) = concat $ zipWith makeLetterAnimation [n1, n2, n3, n4] [0..3]
 
 makeLetterAnimation :: Int -> Int -> FrameList
 makeLetterAnimation number boxNum = diagrams
@@ -98,7 +99,7 @@ getDrawingInfo theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 p
 
 closerTo :: Angle -> Angle -> Angle -> Angle
 closerTo desired a1 a2 = minimumBy (compare `on` dist) [a1, a2] where
-    dist a = a ^+^ (negateV desired) -- TODO: normalize
+    dist a = angleBetween (rotate desired unitX) (rotate a unitX)
 
 closerTo180 = closerTo (180 @@ deg)
 closerTo0 = closerTo (0 @@ deg)

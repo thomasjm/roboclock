@@ -23,7 +23,7 @@ renderFrameList frameList = do
   sequence_ $ zipWith renderSingleFrame svgFilenames frameList
 
   putStrLn "Converting SVGs to PNGs"
-  _ <- shelly $ escaping False $ run "rm" ["/tmp/frame*.png"]
+  _ <- shelly $ escaping False $ run "rm" ["-f", "/tmp/frame*.png"]
   sequence_ $ zipWith convertAction svgFilenames pngFilenames
   _ <- shelly $ escaping False $ run "rm" ["/tmp/frame*.svg"]
 
