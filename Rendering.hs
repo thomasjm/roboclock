@@ -38,4 +38,7 @@ renderFrameList frameList = do
 
     convertAction = (\x y -> shelly $ run "convert" $ map pack [x, y])
 
-r = renderSingleFrame "/tmp/diagram1.svg"
+r diagram = do
+  renderSingleFrame "/tmp/diagram1.svg" diagram
+  shelly $ run "convert" ["/tmp/diagram1.svg", "/tmp/diagram1.png"]
+  return ()

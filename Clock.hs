@@ -37,7 +37,8 @@ data DrawingInfo = DrawingInfo { motor1Origin :: P2
                                , motor2Origin :: P2
                                , end1 :: P2
                                , end2 :: P2
-                               , pen :: Maybe P2 } deriving Show
+                               , pen :: Maybe P2
+                               , nums :: (Int, Int, Int, Int) } deriving Show
 
 getNumberSeries :: Int -> R2 -> Double -> Double -> [P2]
 getNumberSeries n offset scaleX scaleY = map
@@ -47,7 +48,7 @@ getNumberSeries n offset scaleX scaleY = map
     samples = map number [x / 50.0 | x <- [0..50]]
 
 
-bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
+bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen (n1, n2, n3, n4)) =
     -- Pen position, if one was provided
     case pen of Nothing -> mempty
                 Just p -> arrowBetween end1 p # lc green <>
@@ -68,28 +69,28 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen) =
     <> translate (boxOrigin 3) (rectAtOrigin boxWidth boxHeight # lc black)
 
     -- Numbers in the boxes
-    <> drawNumberPoints 0 9
-    <> drawNumberPoints 1 3
-    <> drawNumberPoints 2 3
-    <> drawNumberPoints 3 3
+    <> drawNumberPoints 0 n1
+    <> drawNumberPoints 1 n2
+    <> drawNumberPoints 2 n3
+    <> drawNumberPoints 3 n4
 
 makeLettersAnimation :: (Int, Int, Int, Int) -> FrameList
-makeLettersAnimation (n1, n2, n3, n4) = concat $ zipWith makeLetterAnimation [n1, n2, n3, n4] [0..3]
+makeLettersAnimation nums = concatMap (makeLetterAnimation nums) [0..3]
 
-makeLetterAnimation :: Int -> Int -> FrameList
-makeLetterAnimation number boxNum = diagrams
+makeLetterAnimation :: (Int, Int, Int, Int) -> Int -> FrameList
+makeLetterAnimation nums boxNum = diagrams
     where
-      points = getNumberSeries number (boxOrigin boxNum) boxWidth boxHeight
-      diagrams = map (bothMotors . (uncurry getDrawingInfo) . findThetas) points
+      points = getNumberSeries 3 (boxOrigin boxNum) boxWidth boxHeight
+      diagrams = map (bothMotors . (uncurry $ getDrawingInfo nums) . findThetas) points
 
 drawNumberPoints boxNum n = foldl1 (<>) dots where
     dots = [circleAt x | x <- getNumberSeries n (boxOrigin boxNum) boxWidth boxHeight]
     circleAt x = translate (r2 $ unp2 x) (circle 0.005 # fc red # lc red)
 
 
-getDrawingInfo theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 pen where
-    motor1Origin = origin
-    motor2Origin = translateX s motor1Origin
+getDrawingInfo nums theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 pen nums where
+    motor1Origin = translateX (s/2) origin
+    motor2Origin = motor1Origin
 
     end1 = motor1Origin .+^ (l1 *^ fromDirection theta1)
     end2 = motor2Origin .+^ (l1 *^ fromDirection theta2)
@@ -110,20 +111,15 @@ foreign import ccall "theta.h sol1"
 foreign import ccall "theta.h sol2"
     sol2 :: CDouble -> CDouble -> CDouble -> CDouble
 findThetas :: P2 -> (Angle, Angle)
-findThetas p = (closerTo180 (s11 @@ rad) (s12 @@ rad),
-                closerTo0 (s21 @@ rad) (s22 @@ rad))
+findThetas p = (closerTo180 (s1 @@ rad) (s2 @@ rad),
+                closerTo0 (s1 @@ rad) (s2 @@ rad))
     where
     (x, y) = unp2 p
 
     c = (l2*l2) / (l1*l1)
 
-    -- Compute the two theta values for the first motor
-    a = x / l1
+    -- Compute the two theta values for the motor
+    a = (x - (s/2)) / l1
     b = y / l1
-    s11 = realToFrac $ sol1 (realToFrac a) (realToFrac b) (realToFrac c)
-    s12 = realToFrac $ sol2 (realToFrac a) (realToFrac b) (realToFrac c)
-
-    -- Compute the two theta values for the second motor, which is translated
-    othera = (x - s) / l1
-    s21 = realToFrac $ sol1 (realToFrac othera) (realToFrac b) (realToFrac c)
-    s22 = realToFrac $ sol2 (realToFrac othera) (realToFrac b) (realToFrac c)
+    s1 = realToFrac $ sol1 (realToFrac a) (realToFrac b) (realToFrac c)
+    s2 = realToFrac $ sol2 (realToFrac a) (realToFrac b) (realToFrac c)
