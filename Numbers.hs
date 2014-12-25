@@ -1,14 +1,17 @@
-module Numbers (TraceFn, numbers) where
+module Numbers (TraceFn, numbers, traceFnFromPoints) where
 
 import Data.SVG.SVG
 import System.IO.Unsafe (unsafePerformIO)
 
+import Data.List
 import Data.Maybe
 
+import Diagrams.Prelude ((.-.), (^*), (.+^), magnitude, p2, unp2, lerp)
 import Graphics.SVG.ReadPath
-import Debug.Trace
 
 import Text.HTML.TagSoup
+
+import Debug.Trace
 
 type TraceFn = (Double -> (Double, Double))
 
@@ -66,8 +69,21 @@ makeTraceFn s = do
     return $ traceFnFromPoints pts
 
 
--- This will be hacky for now -- use actual interpolation later
 traceFnFromPoints :: [(Double, Double)] -> Double -> (Double, Double)
-traceFnFromPoints pts t = pts !! (min (l-1) index) where
-    l = length pts
-    index = floor $ t * fromIntegral l
+traceFnFromPoints pts t | t < 0 = head pts
+                        | t > 1 = last pts
+                        | otherwise = unp2 answer where
+
+  points = map p2 pts
+  displacements = map (\(x, y) -> y .-. x) $ zip points (tail points)
+  distanceCdf = scanl (+) 0 $ map magnitude displacements
+
+  -- Find the point we're looking for in the distanceCdf and interpolate
+  dist = t * (last distanceCdf)
+  answer = case findIndex (> dist) distanceCdf of
+    -- If we run off the end, just return the last point
+    Nothing -> last points
+    -- Otherwise interpolate. TODO: figure out how to use the VectorSpace lerp function
+    Just i -> (points !! (i-1)) .+^ ((displacements !! (i-1)) ^* (remainingDistance / distanceBetweenPoints)) where
+      remainingDistance = dist - (distanceCdf !! (i-1))
+      distanceBetweenPoints = magnitude $ (displacements !! (i-1))

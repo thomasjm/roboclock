@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module Clock where
 
@@ -27,6 +28,10 @@ boxWidth = (s - colonSpace - (2*sideGap)) / 4
 boxHeight = 7.0
 boxY = l1
 sideGap = -2.0
+numSamples = 30
+
+circleAt x = translate (r2 $ unp2 x) (circle 0.005 # fc red # lc red)
+
 
 boxOrigin :: Int -> R2
 boxOrigin n = r2 (x, y) where
@@ -40,14 +45,14 @@ data DrawingInfo = DrawingInfo { motor1Origin :: P2
                                , pen :: Maybe P2
                                , nums :: (Int, Int, Int, Int) } deriving Show
 
-getNumberSeries :: Int -> R2 -> Double -> Double -> [P2]
-getNumberSeries n offset scaleX scaleY = map
-                                         (\(x,y) -> (p2 (x * scaleX, y * scaleY)) .+^ offset)
-                                         samples where
+getNumberSeries :: Int -> R2 -> Double -> Double -> Int -> [P2]
+getNumberSeries n offset scaleX scaleY numSamples =
+  map (\(x,y) -> (p2 (x * scaleX, y * scaleY)) .+^ offset) samples where
     number = numbers !! n
-    samples = map number [x / 50.0 | x <- [0..50]]
+    samples = map number [(fromIntegral x) / (fromIntegral numSamples) | x <- [0..numSamples]]
 
 
+bothMotors :: Renderable (Path R2) b => DrawingInfo -> Diagram b R2
 bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen (n1, n2, n3, n4)) =
     -- Pen position, if one was provided
     case pen of Nothing -> mempty
@@ -58,9 +63,9 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen (n1, n2, n3, n4)
     <> arrowBetween motor1Origin end1 # lc black
     <> arrowBetween motor2Origin end2 # lc black
 
-    -- Blue lines from rod 1 endpoints to rod 2 endpoints
-    <> moveCircle end1 (circle l2) # lc blue
-    <> moveCircle end2 (circle l2) # lc blue
+    -- Blue circles at rod 1 endpoints
+    -- <> moveCircle end1 (circle l2) # lc blue
+    -- <> moveCircle end2 (circle l2) # lc blue
 
     -- Boxes for number drawing
     <> translate (boxOrigin 0) (rectAtOrigin boxWidth boxHeight # lc black)
@@ -74,19 +79,30 @@ bothMotors (DrawingInfo motor1Origin motor2Origin end1 end2 pen (n1, n2, n3, n4)
     <> drawNumberPoints 2 n3
     <> drawNumberPoints 3 n4
 
-makeLettersAnimation :: (Int, Int, Int, Int) -> FrameList
-makeLettersAnimation nums = concatMap (makeLetterAnimation nums) [0..3]
+drawReachablePoints :: Renderable (Path R2) b => Diagram b R2
+drawReachablePoints = (bothMotors $ getDrawingInfo (0,0,0,0) (0 @@ deg) (0 @@ deg))
+                      <> dots where
+  theta1 = map (@@ deg) [90..180]
+  theta2 = map (@@ deg) [0..90]
 
-makeLetterAnimation :: (Int, Int, Int, Int) -> Int -> FrameList
-makeLetterAnimation nums boxNum = diagrams
+  thetaPairs = [(x,y) | x <- theta1, y <- theta2]
+  drawingInfos = map (uncurry $ getDrawingInfo (0,0,0,0)) thetaPairs
+  validPens = catMaybes $ map pen drawingInfos :: [P2]
+  dots = foldl1 (<>) [circleAt x | x <- validPens]
+
+
+makeLettersAnimation :: (Int, Int, Int, Int) -> FrameList
+makeLettersAnimation nums@(n1,n2,n3,n4) =
+  concat $ zipWith (makeLetterAnimation nums) [n1,n2,n3,n4] [0..3]
+
+makeLetterAnimation :: (Int, Int, Int, Int) -> Int -> Int -> FrameList
+makeLetterAnimation nums numToDraw boxNum = diagrams
     where
-      points = getNumberSeries 3 (boxOrigin boxNum) boxWidth boxHeight
+      points = getNumberSeries numToDraw (boxOrigin boxNum) boxWidth boxHeight numSamples
       diagrams = map (bothMotors . (uncurry $ getDrawingInfo nums) . findThetas) points
 
 drawNumberPoints boxNum n = foldl1 (<>) dots where
-    dots = [circleAt x | x <- getNumberSeries n (boxOrigin boxNum) boxWidth boxHeight]
-    circleAt x = translate (r2 $ unp2 x) (circle 0.005 # fc red # lc red)
-
+    dots = [circleAt x | x <- getNumberSeries n (boxOrigin boxNum) boxWidth boxHeight numSamples]
 
 getDrawingInfo nums theta1 theta2 = DrawingInfo motor1Origin motor2Origin end1 end2 pen nums where
     motor1Origin = translateX (s/2) origin
